@@ -219,13 +219,22 @@ function extract_parts() {
 
 function provisioning_download_hf() {
   if [[ $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
-    local repository filename
+    local repository filename basename_only target_file
     read -r repository filename < <(extract_parts "$1")
+    
+    # Extract just the filename without the path
+    basename_only="${filename##*/}"
+    target_file="$2/$basename_only"
 
     echo "Using repository: $repository"
     echo "Using file: $filename"
-    echo "Downloading to: $2"
-    hf download "$repository" "$filename" --local-dir="$2"
+    echo "Downloading to: $target_file"
+    
+    # Download to temp location first, then move to avoid nested structure
+    local temp_dir=$(mktemp -d)
+    hf download "$repository" "$filename" --local-dir="$temp_dir"
+    mv "$temp_dir/$filename" "$target_file"
+    rm -rf "$temp_dir"
   elif [[ -n $CIVITAI_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
     wget --header="Authorization: Bearer $CIVITAI_TOKEN" -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
   else
