@@ -189,6 +189,17 @@ function provisioning_download() {
     fi
 }
 
+function extract_parts() {
+    local url="$1"
+    # Extract from URL like: https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors
+    # Pattern: https://huggingface.co/{user}/{repo}/resolve/{branch}/{path/to/file}
+    if [[ $url =~ https://huggingface\.co/([^/]+/[^/]+)/resolve/[^/]+/(.+)$ ]]; then
+        echo "${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+    else
+        echo ""
+    fi
+}
+
 function provisioning_download_hf() {
   if [[ $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
     local repository filename
